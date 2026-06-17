@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import kr.or.nia.dpg.vpos.config.properties.api.ApiCertifiProperties;
+import kr.or.nia.dpg.vpos.interceptor.retroifit.okhttp.ApiLogInterceptor;
 import kr.or.nia.dpg.vpos.web.api.certificate.RetrofitCertifiService;
 import lombok.RequiredArgsConstructor;
 import okhttp3.OkHttpClient;
@@ -26,6 +27,7 @@ public class RetrofitConfig {
     private static final Logger log = LoggerFactory.getLogger(RetrofitConfig.class);
 
     private final ApiCertifiProperties certifiProperties;
+    private final ApiLogInterceptor apiLogInterceptor;
 
     @Bean(name = "certifiRetrofit")
     public Retrofit CertifiRetrofit() {
@@ -40,6 +42,7 @@ public class RetrofitConfig {
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(loggingInterceptor)
+                    .addInterceptor(apiLogInterceptor)
                     .addInterceptor(chain -> {
                         Request original = chain.request();
                         Request request = original.newBuilder()
