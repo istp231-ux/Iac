@@ -165,7 +165,9 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 
 		if ("000".equals(res.getResultCode())) {
 			log.info("[{}] API 호출 성공", methodName);
-			return res.getResult();
+			List<PersonalVO> result = res.getResult();
+			// 호출부의 NPE 방지를 위해 result가 null이면 빈 목록을 반환한다.
+			return result != null ? result : new ArrayList<>();
 		} else {
 			log.warn("[{}] API 응답 실패 - 응답코드: {}, 응답메시지: {}",
 					methodName, res.getResultCode(), res.getResultMsg());

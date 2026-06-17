@@ -30,10 +30,13 @@ public class RetrofitConfig {
     @Bean(name = "certifiRetrofit")
     public Retrofit CertifiRetrofit() {
         try {
+            // 외부 인증 API는 주민등록번호/CI/DI/이름/연락처 등 민감 개인정보를 주고받으므로
+            // 요청/응답 본문(BODY)과 헤더(HEADERS, API_KEY 포함)는 로그에 남기지 않는다.
+            // BASIC: 메서드/URL/응답코드/소요시간만 기록(개인정보·인증키 미노출).
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(message ->
                 log.debug("[OkHttp] {}", message)
             );
-            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+            loggingInterceptor.setLevel(HttpLoggingInterceptor.Level.BASIC);
 
             OkHttpClient client = new OkHttpClient.Builder()
                     .addInterceptor(loggingInterceptor)
