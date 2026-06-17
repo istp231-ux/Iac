@@ -19,10 +19,27 @@ import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+/**
+ * OkHttp Interceptor - API 응답 원본을 캡처해서 암호화 후 DB에 저장하고,
+ * traceId/httpStts를 {@link ApiLogContext}(ThreadLocal)에 보관한다.
+ *
+ * <p>설계 원칙</p>
+ * <ul>
+ *   <li>OkHttp 계약상 {@code intercept()}는 절대 null을 반환하면 안 된다(반환하면 호출 체인에서 NPE).
+ *       통신 실패는 {@code IOException}을 그대로 전파한다.</li>
+ *   <li>로깅/저장 실패가 실제 API 호출을 깨뜨려서는 안 된다. 응답을 정상 수신한 뒤의
+ *       본문 읽기·암호화·DB 저장 단계의 예외는 모두 흡수하고 원본 응답을 반환한다.</li>
+ *   <li>ThreadLocal({@link ApiLogContext})은 요청 종료 시 반드시 clear() 되어야 한다
+ *       (ApiLogContextFilter에서 처리).</li>
+ * </ul>
+ */
 @Component
 @Slf4j
 @RequiredArgsConstructor
 public class ApiLogInterceptor implements Interceptor {
+
+	/** peekBody로 읽어들일 응답 본문 최대 크기 (1MB) */
+	private static final long MAX_PEEK_BYTES = 1024L * 1024;
 
 	private final ApiResponseLogMapper apiLogMapper;
 	private final ARIACryptor ariaCryptor;
@@ -33,31 +50,46 @@ public class ApiLogInterceptor implements Interceptor {
 		Request request = chain.request();
 		String traceId = UUID.randomUUID().toString();
 
+		Response response;
 		try {
-			Response response = chain.proceed(request);
-
-			String rawResponse = "";
-			ResponseBody body = response.peekBody(1024L * 1024);
-			if (body != null) {
-				rawResponse = body.string();
-			}
-			log.info("[ApiLogInterceptor] 응답 수신 - traceId={}, httpStts={}, url={}",
-					traceId, response.code(), request.url());
-
-			saveRawLog(traceId, rawResponse);
-			ApiLogContext.set(new ApiLogContext.LogData(traceId, response.code()));
-
-			return response;
-
+			response = chain.proceed(request);
 		} catch (IOException e) {
-			log.error("[ApiLogInterceptor] API 호출 중 IO 오류 - traceId={}, url={}", traceId, request.url(), e);
-			saveRawLog(traceId, "IOException: " + e.getMessage());
+			// 통신 자체 실패 - 비즈니스적으로 의미가 있으므로 기록 후 그대로 전파한다.
+			log.error("[ApiLogInterceptor] API 호출 실패 - traceId={}, url={}", traceId, request.url(), e);
+			safeSaveRawLog(traceId, "IOException: " + e.getMessage());
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
 			throw e;
 		}
+
+		// 응답 로깅은 어떤 경우에도 본 호출(인증 흐름)을 깨뜨려서는 안 된다 -> 예외 전부 흡수.
+		try {
+			String rawResponse = readBodySafely(response);
+			log.info("[ApiLogInterceptor] 응답 수신 - traceId={}, httpStts={}, url={}",
+					traceId, response.code(), request.url());
+
+			safeSaveRawLog(traceId, rawResponse);
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, response.code()));
+		} catch (Exception e) {
+			// 본 호출에는 영향 없음. 최소한 상태 코드라도 컨텍스트에 남긴다.
+			log.error("[ApiLogInterceptor] 응답 로깅 처리 중 오류(API 호출에는 영향 없음) - traceId={}", traceId, e);
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, response.code()));
+		}
+
+		return response;
 	}
 
-	private void saveRawLog(String traceId, String rawResponse) {
+	/**
+	 * 원본 스트림을 소비하지 않도록 peekBody로 응답 본문을 복사해 읽는다.
+	 */
+	private String readBodySafely(Response response) throws IOException {
+		ResponseBody body = response.peekBody(MAX_PEEK_BYTES);
+		return body.string();
+	}
+
+	/**
+	 * Raw 응답을 암호화하여 DB에 저장한다. 저장 실패는 흡수한다(로그만 남김).
+	 */
+	private void safeSaveRawLog(String traceId, String rawResponse) {
 		try {
 			String encrypted = ariaCryptor.encrypt(rawResponse, "log");
 
