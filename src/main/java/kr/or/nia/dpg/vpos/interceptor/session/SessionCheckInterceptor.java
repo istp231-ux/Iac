@@ -3,7 +3,6 @@ package kr.or.nia.dpg.vpos.interceptor.session;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import okhttp3.logging.HttpLoggingInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -24,9 +23,6 @@ public class SessionCheckInterceptor implements HandlerInterceptor {
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception {
 		try {
-			HttpLoggingInterceptor httpInterceptor = new HttpLoggingInterceptor();
-			httpInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
-
 			// 브라우저 캐시 방지
 			response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 			response.setHeader("Pragma", "no-cache");
