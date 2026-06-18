@@ -1,0 +1,39 @@
+server:
+  servlet:
+    context-path: /vpos
+    session:
+      timeout: 20m  #임시로 지정
+      cookie:
+        http-only: true
+        secure: true
+        same-site: lax
+  port: 21100
+
+# 수동 Bean이 자동 Bean을 오버라이딩하게 설정
+spring:
+  main.allow-bean.definition-overriding: true
+  #PostgreSQL
+  datasource:
+    url: ENC(0npiytD+XIP5TO7BkRRFKP1XgsUVFoDzNvUPr6IyQXJH1aXp+6/dkFVjvCneg5IwQ0ZMWFbMokg=)
+    #username: ENC(OMkHgS+tkzSimbwgD29n+Q==)
+    #password: ENC(S0em1NHB8abrOh3xVeZxkPq3u+ks8dsV)
+    # 금융회사 공동코드 테이블에 접속하기 위함(접속 정보 다름)
+    username: ENC(2STTu4jqdiK73rLfSvyYxV/lvmNSz5X0)
+    password: ENC(zWbZZdXy/2B+wcd/cQoqwCkZU3XNGa/4)
+    driver-class-name: com.yugabyte.Driver
+    hikari:
+      connection-init-sql: SET search_path TO vps;
+
+#Mybatis settings
+mybatis:
+  mapper-locations: classpath:egovframework/sqlmap/mappers/**/*.xml
+  type-aliases-package: kr.or.nia.dpg.vpos.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+# Jasypt Setting
+# ADD VM Option : -Djasypt.encryptor.password=
+jasypt:
+  encryptor:
+    algorithm: PBEWithMD5AndDES
+    iv-generator-classname: org.jasypt.iv.NoIvGenerator
