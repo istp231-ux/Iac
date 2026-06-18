@@ -1,4 +1,4 @@
-package kr.or.nia.dpg.vpos.config.properties;
+package kr.or.nia.dpg.vpos.config.properties.tomcat;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,11 +10,10 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "data.tomcat.ajp")
 public class TomcatAjpProperties {
-
-    private boolean enabled = false;
-    private String scheme = "http";
-    private String protocol = "AJP/1.3";
-    private int port = 21105;
-    private boolean secure = false;
-    private boolean allowTrace = false;
+	private Boolean enabled;
+	private String scheme;
+	private String protocol;
+	private int port;
+	private Boolean secure;
+	private Boolean allowTrace;
 }

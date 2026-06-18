@@ -1,6 +1,6 @@
 package kr.or.nia.dpg.vpos.config;
 
-import kr.or.nia.dpg.vpos.config.properties.TomcatAjpProperties;
+import kr.or.nia.dpg.vpos.config.properties.tomcat.TomcatAjpProperties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.catalina.connector.Connector;
@@ -22,9 +22,9 @@ public class TomcatAjpConfig implements WebServerFactoryCustomizer<TomcatServlet
     public void customize(TomcatServletWebServerFactory factory) {
         Connector ajpConnector = new Connector(ajpProperties.getProtocol());
         ajpConnector.setPort(ajpProperties.getPort());
-        ajpConnector.setSecure(ajpProperties.isSecure());
+        ajpConnector.setSecure(Boolean.TRUE.equals(ajpProperties.getSecure()));
         ajpConnector.setScheme(ajpProperties.getScheme());
-        ajpConnector.setAllowTrace(ajpProperties.isAllowTrace());
+        ajpConnector.setAllowTrace(Boolean.TRUE.equals(ajpProperties.getAllowTrace()));
 
         AjpNioProtocol protocol = (AjpNioProtocol) ajpConnector.getProtocolHandler();
         protocol.setSecretRequired(false);
@@ -33,6 +33,6 @@ public class TomcatAjpConfig implements WebServerFactoryCustomizer<TomcatServlet
 
         log.info("[TomcatAjpConfig] AJP 커넥터 등록 완료 - port={}, scheme={}, secure={}, protocol={}",
                 ajpProperties.getPort(), ajpProperties.getScheme(),
-                ajpProperties.isSecure(), ajpProperties.getProtocol());
+                ajpProperties.getSecure(), ajpProperties.getProtocol());
     }
 }
