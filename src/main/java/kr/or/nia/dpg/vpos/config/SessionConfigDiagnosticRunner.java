@@ -4,8 +4,6 @@ import java.time.Duration;
 
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.boot.web.server.Cookie;
-import org.springframework.boot.web.servlet.server.Session;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -40,17 +38,19 @@ public class SessionConfigDiagnosticRunner {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void logEffectiveSessionConfig() {
+		// Spring Boot 2.7.x: Session, Cookie는 ServerProperties의 내부 클래스
 		ServerProperties.Servlet servlet = serverProperties.getServlet();
 		String contextPath = (servlet != null) ? servlet.getContextPath() : null;
 
-		Session session = (servlet != null) ? servlet.getSession() : null;
+		ServerProperties.Servlet.Session session =
+				(servlet != null) ? servlet.getSession() : null;
 		Duration timeout = (session != null) ? session.getTimeout() : null;
 
 		Boolean secure = null;
 		Boolean httpOnly = null;
 		Object sameSite = null;
 		if (session != null && session.getCookie() != null) {
-			Cookie cookie = session.getCookie();
+			ServerProperties.Servlet.Session.Cookie cookie = session.getCookie();
 			secure = cookie.getSecure();
 			httpOnly = cookie.getHttpOnly();
 			sameSite = cookie.getSameSite();
