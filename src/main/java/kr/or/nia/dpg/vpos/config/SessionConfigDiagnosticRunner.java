@@ -1,7 +1,5 @@
 package kr.or.nia.dpg.vpos.config;
 
-import java.time.Duration;
-
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
@@ -38,24 +36,6 @@ public class SessionConfigDiagnosticRunner {
 
 	@EventListener(ApplicationReadyEvent.class)
 	public void logEffectiveSessionConfig() {
-		// Spring Boot 2.7.x: Session, Cookie는 ServerProperties의 내부 클래스
-		ServerProperties.Servlet servlet = serverProperties.getServlet();
-		String contextPath = (servlet != null) ? servlet.getContextPath() : null;
-
-		ServerProperties.Servlet.Session session =
-				(servlet != null) ? servlet.getSession() : null;
-		Duration timeout = (session != null) ? session.getTimeout() : null;
-
-		Boolean secure = null;
-		Boolean httpOnly = null;
-		Object sameSite = null;
-		if (session != null && session.getCookie() != null) {
-			ServerProperties.Servlet.Session.Cookie cookie = session.getCookie();
-			secure = cookie.getSecure();
-			httpOnly = cookie.getHttpOnly();
-			sameSite = cookie.getSameSite();
-		}
-
 		String[] activeProfiles = environment.getActiveProfiles();
 		String profiles = (activeProfiles == null || activeProfiles.length == 0)
 				? "(none/default)" : String.join(",", activeProfiles);
@@ -63,8 +43,36 @@ public class SessionConfigDiagnosticRunner {
 		log.info("==================== [세션설정 진단] 기동 시점 최종 반영값 ====================");
 		log.info("[세션설정] activeProfiles   = {}", profiles);
 		log.info("[세션설정] server.port      = {}", serverProperties.getPort());
-		log.info("[세션설정] context-path     = {}", contextPath);
-		log.info("[세션설정] session.timeout  = {}", timeout);
+
+		// var 사용 → Session, Cookie 클래스를 직접 참조하지 않아 import 문제 회피
+		var servlet = serverProperties.getServlet();
+		if (servlet == null) {
+			log.info("[세션설정] servlet 설정 없음");
+			log.info("======================================================================");
+			return;
+		}
+
+		log.info("[세션설정] context-path     = {}", servlet.getContextPath());
+
+		var session = servlet.getSession();
+		if (session == null) {
+			log.info("[세션설정] session 설정 없음");
+			log.info("======================================================================");
+			return;
+		}
+
+		log.info("[세션설정] session.timeout  = {}", session.getTimeout());
+
+		var cookie = session.getCookie();
+		Boolean secure = null;
+		Boolean httpOnly = null;
+		Object sameSite = null;
+		if (cookie != null) {
+			secure = cookie.getSecure();
+			httpOnly = cookie.getHttpOnly();
+			sameSite = cookie.getSameSite();
+		}
+
 		log.info("[세션설정] cookie.secure    = {}", secure);
 		log.info("[세션설정] cookie.http-only = {}", httpOnly);
 		log.info("[세션설정] cookie.same-site = {}", sameSite);
