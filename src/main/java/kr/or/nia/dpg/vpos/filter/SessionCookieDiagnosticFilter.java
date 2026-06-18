@@ -53,12 +53,19 @@ public class SessionCookieDiagnosticFilter extends OncePerRequestFilter {
 		boolean diagnose = isAuthFlowPath(request.getRequestURI());
 
 		if (diagnose) {
-			log.info("[세션진단:IN ] uri={}, 브라우저쿠키JSESSIONID={}, requestedSessionId={}, valid={}, fromCookie={}, remoteAddr={}",
+			log.info("[세션진단:IN ] uri={}, method={}, scheme={}, isSecure={}, "
+					+ "브라우저쿠키JSESSIONID={}, requestedSessionId={}, valid={}, fromCookie={}, "
+					+ "X-Forwarded-Proto={}, X-Forwarded-For={}, remoteAddr={}",
 					request.getRequestURI(),
+					request.getMethod(),
+					request.getScheme(),
+					request.isSecure(),
 					extractSessionCookie(request),
 					request.getRequestedSessionId(),
 					request.isRequestedSessionIdValid(),
 					request.isRequestedSessionIdFromCookie(),
+					request.getHeader("X-Forwarded-Proto"),
+					request.getHeader("X-Forwarded-For"),
 					request.getRemoteAddr());
 		}
 
@@ -66,8 +73,8 @@ public class SessionCookieDiagnosticFilter extends OncePerRequestFilter {
 			filterChain.doFilter(request, response);
 		} finally {
 			if (diagnose) {
-				log.info("[세션진단:OUT] uri={}, 응답SetCookie(JSESSIONID)={}",
-						request.getRequestURI(), describeSetCookie(response));
+				log.info("[세션진단:OUT] uri={}, 응답SetCookie(JSESSIONID)={}, 응답Status={}",
+						request.getRequestURI(), describeSetCookie(response), response.getStatus());
 			}
 		}
 	}
