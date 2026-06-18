@@ -37,8 +37,8 @@ public class SessionCheckInterceptor implements HandlerInterceptor {
 			}
 			return true;
 		} catch (Exception e) {
-			log.error("[SessionCheckInterceptor] 세션 인증 확인 중 오류 발생 - URI: {}, RemoteAddr: {}, exType={}, error={}",
-					request.getRequestURI(), request.getRemoteAddr(), e.getClass().getSimpleName(), e.getMessage());
+			log.error("[SessionCheckInterceptor] 세션 인증 확인 중 오류 발생 - URI: {}, RemoteAddr: {}",
+					request.getRequestURI(), request.getRemoteAddr(), e);
 			response.sendRedirect(request.getContextPath() + "/main");
 			return false;
 		}

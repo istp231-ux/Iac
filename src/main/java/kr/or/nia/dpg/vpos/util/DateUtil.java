@@ -41,7 +41,7 @@ public class DateUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
             return formatter.format(LocalDate.now(KST));
         } catch (Exception e) {
-            log.error("[DateUtil.getTodayString] 날짜 변환 실패 - format: {}, exType={}, error={}", format, e.getClass().getSimpleName(), e.getMessage());
+            log.error("[DateUtil.getTodayString] 날짜 변환 실패 - format: {}", format, e);
             return "";
         }
     }
@@ -54,7 +54,7 @@ public class DateUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS");
             return LocalDateTime.now(KST).format(formatter);
         } catch (Exception e) {
-            log.error("[DateUtil.getNowStringWithMilliSecond] 날짜 변환 실패 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
+            log.error("[DateUtil.getNowStringWithMilliSecond] 날짜 변환 실패", e);
             return "";
         }
     }
@@ -64,7 +64,7 @@ public class DateUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
             return LocalDateTime.now(KST).format(formatter);
         } catch (Exception e) {
-            log.error("[DateUtil.getNowStringWithSecond] 날짜 변환 실패 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
+            log.error("[DateUtil.getNowStringWithSecond] 날짜 변환 실패", e);
             return "";
         }
     }
@@ -74,7 +74,7 @@ public class DateUtil {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
             return LocalDateTime.now(KST).format(formatter);
         } catch (Exception e) {
-            log.error("[DateUtil.getNowStringWithMinute] 날짜 변환 실패 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
+            log.error("[DateUtil.getNowStringWithMinute] 날짜 변환 실패", e);
             return "";
         }
     }
@@ -90,7 +90,7 @@ public class DateUtil {
             String randomNum = String.format("%03d", new SecureRandom().nextInt(1000));
             return timestamp + randomNum;
         } catch (Exception e) {
-            log.error("[DateUtil.generateTrdNo] 거래번호 생성 실패 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
+            log.error("[DateUtil.generateTrdNo] 거래번호 생성 실패", e);
             return "";
         }
     }

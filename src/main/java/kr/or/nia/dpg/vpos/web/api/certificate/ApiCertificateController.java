@@ -266,7 +266,7 @@ public class ApiCertificateController {
                 log.info("[{}] 개인정보 신규 등록 완료", methodName);
             }
         } catch (Exception e) {
-            log.error("[{}] [원인:내부서버] 개인정보 DB 저장 실패 - exType={}, error={}", methodName, e.getClass().getSimpleName(), e.getMessage());
+            log.error("[{}] [원인:내부서버] 개인정보 DB 저장 실패", methodName, e);
             throw new VpsException(VpsExceptionType.DB_ERROR,
                     "개인정보 저장 실패: " + e.getMessage());
         }
@@ -281,7 +281,7 @@ public class ApiCertificateController {
                 log.info("[{}] 앱 정보 업데이트 완료", methodName);
             }
         } catch (Exception e) {
-            log.error("[{}] [원인:내부서버] 앱 정보 DB 저장 실패 - exType={}, error={}", methodName, e.getClass().getSimpleName(), e.getMessage());
+            log.error("[{}] [원인:내부서버] 앱 정보 DB 저장 실패", methodName, e);
             throw new VpsException(VpsExceptionType.DB_ERROR,
                     "앱 정보 저장 실패: " + e.getMessage());
         }
@@ -316,7 +316,7 @@ public class ApiCertificateController {
             LocalDate birthDate = LocalDate.parse(century + birthPart, formatter);
             return Period.between(birthDate, LocalDate.now()).getYears();
         } catch (Exception e) {
-            log.error("[ageChange] 생년월일 파싱 실패로 나이를 0으로 처리합니다. exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
+            log.error("[ageChange] 생년월일 파싱 실패로 나이를 0으로 처리합니다.", e);
             return 0;
         }
     }

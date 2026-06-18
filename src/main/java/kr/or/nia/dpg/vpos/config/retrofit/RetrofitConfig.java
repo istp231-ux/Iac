@@ -75,7 +75,7 @@ public class RetrofitConfig {
             log.info("[RetrofitConfig] certifi Retrofit 초기화 완료 - baseUrl={}", baseUrl);
             return retrofit;
         } catch (Exception e) {
-            log.error("[RetrofitConfig] [원인:내부서버] Retrofit 클라이언트 초기화 실패 - baseUrl={}, exType={}, error={}", baseUrl, e.getClass().getSimpleName(), e.getMessage());
+            log.error("[RetrofitConfig] [원인:내부서버] Retrofit 클라이언트 초기화 실패 - baseUrl={}", baseUrl, e);
             throw e;
         }
     }

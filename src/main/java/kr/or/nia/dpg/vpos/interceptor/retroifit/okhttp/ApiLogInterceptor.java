@@ -80,14 +80,14 @@ public class ApiLogInterceptor implements Interceptor {
 			throw e;
 		} catch (SSLException e) {
 			log.error("[ApiLogInterceptor] [원인:외부서버] SSL 통신 오류 - traceId={}, url={}, error={}",
-					traceId, request.url(), e.getMessage());
+					traceId, request.url(), e.getMessage(), e);
 			safeSaveRawLog(traceId, "SSLException: " + e.getMessage());
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
 			throw e;
 		} catch (IOException e) {
 			long elapsed = System.currentTimeMillis() - startTime;
 			log.error("[ApiLogInterceptor] [원인:불명] API 호출 IO 오류 - traceId={}, url={}, elapsed={}ms, exType={}, error={}",
-					traceId, request.url(), elapsed, e.getClass().getSimpleName(), e.getMessage());
+					traceId, request.url(), elapsed, e.getClass().getSimpleName(), e.getMessage(), e);
 			safeSaveRawLog(traceId, e.getClass().getSimpleName() + ": " + e.getMessage());
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
 			throw e;
@@ -103,8 +103,7 @@ public class ApiLogInterceptor implements Interceptor {
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, response.code()));
 		} catch (Exception e) {
 			// 본 호출에는 영향 없음. 최소한 상태 코드라도 컨텍스트에 남긴다.
-			log.error("[ApiLogInterceptor] 응답 로깅 처리 중 오류(API 호출에는 영향 없음) - traceId={}, exType={}, error={}",
-					traceId, e.getClass().getSimpleName(), e.getMessage());
+			log.error("[ApiLogInterceptor] 응답 로깅 처리 중 오류(API 호출에는 영향 없음) - traceId={}", traceId, e);
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, response.code()));
 		}
 
@@ -132,9 +131,9 @@ public class ApiLogInterceptor implements Interceptor {
 
 			apiLogMapper.insertRawLog(rawVO);
 		} catch (DataAccessException e) {
-			log.error("[ApiLogInterceptor] API 로그 DB 저장 실패 - traceId={}, exType={}, error={}", traceId, e.getClass().getSimpleName(), e.getMessage());
+			log.error("[ApiLogInterceptor] API 로그 DB 저장 실패 - traceId={}", traceId, e);
 		} catch (Exception e) {
-			log.error("[ApiLogInterceptor] API 로그 암호화/저장 중 오류 - traceId={}, exType={}, error={}", traceId, e.getClass().getSimpleName(), e.getMessage());
+			log.error("[ApiLogInterceptor] API 로그 암호화/저장 중 오류 - traceId={}", traceId, e);
 		}
 	}
 

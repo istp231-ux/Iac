@@ -50,8 +50,8 @@ public class ARIACryptor {
             byte[] encrypted = cipher.doFinal(plainText.getBytes(CHARSET));
             return Base64.getEncoder().encodeToString(encrypted);
         } catch (Exception e) {
-            log.error("[ARIACryptor] 암호화 실패 - keyName={}, exType={}, error={}", keyName, e.getClass().getSimpleName(), e.getMessage());
-            throw new RuntimeException("ARIA 암호화 처리 중 오류 발생");
+            log.error("[ARIACryptor] 암호화 실패 - keyName={}", keyName, e);
+            throw new RuntimeException("ARIA 암호화 처리 중 오류 발생", e);
         }
     }
 
@@ -68,8 +68,8 @@ public class ARIACryptor {
             byte[] decrypted = cipher.doFinal(Base64.getDecoder().decode(cipherText));
             return new String(decrypted, CHARSET);
         } catch (Exception e) {
-            log.error("[ARIACryptor] 복호화 실패 - keyName={}, exType={}, error={}", keyName, e.getClass().getSimpleName(), e.getMessage());
-            throw new RuntimeException("ARIA 복호화 처리 중 오류 발생");
+            log.error("[ARIACryptor] 복호화 실패 - keyName={}", keyName, e);
+            throw new RuntimeException("ARIA 복호화 처리 중 오류 발생", e);
         }
     }
 

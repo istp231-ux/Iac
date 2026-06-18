@@ -24,7 +24,7 @@ public class ViewGlobalExceptionHandler {
                     type.getOrigin().name(),
                     type.name(), type.getMessage(), ex.getDetail(),
                     ex.getExternalApiName() != null ? ex.getExternalApiName() : "N/A",
-                    reqInfo);
+                    reqInfo, ex);
             throw ex;
         }
 
@@ -38,7 +38,7 @@ public class ViewGlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public String handleRuntimeException(RuntimeException ex, Model model, HttpServletRequest request) {
         log.error("[View예외:내부서버] 예상치 못한 오류 - exType={}, error={}, {}",
-                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request));
+                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request), ex);
 
         model.addAttribute("message", "처리 중 오류가 발생했습니다.");
         model.addAttribute("redirectUrl", "/vpos/main");
