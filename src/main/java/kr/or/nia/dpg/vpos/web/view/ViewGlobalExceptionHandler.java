@@ -16,12 +16,14 @@ public class ViewGlobalExceptionHandler {
         VpsExceptionType type = ex.getType();
 
         if(type != VpsExceptionType.UNAUTHORIZED){
-            log.error("[ViewGlobalExceptionHandler] VpsException 발생 - type: {}, message: {}, detail: {}",
-                    type.name(), type.getMessage(), ex.getDetail());
+            log.error("[View예외:{}] type={}, message={}, detail={}, api={}",
+                    type.getOrigin().name(),
+                    type.name(), type.getMessage(), ex.getDetail(),
+                    ex.getExternalApiName() != null ? ex.getExternalApiName() : "N/A");
             throw ex;
         }
 
-        log.warn("[ViewGlobalExceptionHandler] 세션 만료 - type: {}, message: {}", type.name(), type.getMessage());
+        log.warn("[View예외:세션만료] type={}, message={}", type.name(), type.getMessage());
 
         model.addAttribute("message", "세션이 만료되었습니다. 처음 화면으로 이동합니다.");
         model.addAttribute("redirectUrl", "/vpos/main");

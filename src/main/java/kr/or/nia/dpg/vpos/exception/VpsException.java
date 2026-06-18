@@ -13,18 +13,27 @@ public class VpsException extends RuntimeException {
 
 	private final VpsExceptionType type;
     private final String detail;
+    private final String externalApiName;
 
     public VpsException(VpsExceptionType type) {
         super(type.getMessage());
         this.type = type;
         this.detail = null;
+        this.externalApiName = null;
     }
 
-    // errorBody 담을 때 사용
     public VpsException(VpsExceptionType type, String detail) {
     	super(type.getMessage());
         this.type = type;
         this.detail = detail;
+        this.externalApiName = null;
+    }
+
+    public VpsException(VpsExceptionType type, String detail, String externalApiName) {
+        super(type.getMessage());
+        this.type = type;
+        this.detail = detail;
+        this.externalApiName = externalApiName;
     }
 
     public VpsExceptionType getType(){
@@ -33,5 +42,9 @@ public class VpsException extends RuntimeException {
 
 	public String getDetail() {
 		return detail;
+	}
+
+	public String getExternalApiName() {
+		return externalApiName;
 	}
 }

@@ -14,42 +14,30 @@ import retrofit2.Response;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.ssl.SSLException;
 
 // TODO 추후 삭제 필요
 @Slf4j
 @Service
 public class CertificateApiServiceImpl implements CertificateApiService {
 
+	private static final String API_NAME = "인증서API(certifi)";
 
 	private final RetrofitCertifiService retrofitCertifiService;
-
 
     public CertificateApiServiceImpl(RetrofitCertifiService retrofitCertifiService) {
         this.retrofitCertifiService = retrofitCertifiService;
     }
 
-	/**
-	 * 공동인증 API호출
-	 */
 	@Override
 	public List<PersonalVO> certificateSearch(String personalNumber){
 		/*
         Call<ApiResponse<List<PersonalVO>>> call = retrofitCertifiService.searchPerson();
-        try {
-        	Response<ApiResponse<List<PersonalVO>>> response = call.execute();
-        	return handleApiResponse(response, "certificateSearch");
-        } catch (SocketTimeoutException e) {
-            log.error("[certificateSearch] API 응답 시간 초과", e);
-            throw new VpsException(VpsExceptionType.API_TIMEOUT);
-        } catch (ConnectException e) {
-            log.error("[certificateSearch] API 서버 연결 실패", e);
-            throw new VpsException(VpsExceptionType.API_CONNECTION_REFUSED);
-        } catch (IOException e) {
-            log.error("[certificateSearch] API 호출 중 IO 오류 발생", e);
-            throw new VpsException(VpsExceptionType.API_SERVER_ERROR);
-        }
+        return executeApiCall(call, "certificateSearch", "/IF-VPS-001");
 		*/
 
 		List<PersonalVO> list = new ArrayList<>();
@@ -62,27 +50,11 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 		return list;
 	}
 
-
-	/**
-	 * 휴대폰인증 API호출
-	 */
 	@Override
 	public List<PersonalVO> phoneSearch(String personalNumber) {
 		/*
         Call<ApiResponse<List<PersonalVO>>> call = retrofitCertifiService.searchPersonMobile();
-        try {
-        	Response<ApiResponse<List<PersonalVO>>> response = call.execute();
-        	return handleApiResponse(response, "phoneSearch");
-        } catch (SocketTimeoutException e) {
-            log.error("[phoneSearch] API 응답 시간 초과", e);
-            throw new VpsException(VpsExceptionType.API_TIMEOUT);
-        } catch (ConnectException e) {
-            log.error("[phoneSearch] API 서버 연결 실패", e);
-            throw new VpsException(VpsExceptionType.API_CONNECTION_REFUSED);
-        } catch (IOException e) {
-            log.error("[phoneSearch] API 호출 중 IO 오류 발생", e);
-            throw new VpsException(VpsExceptionType.API_SERVER_ERROR);
-        }
+        return executeApiCall(call, "phoneSearch", "/IF-VPS-002");
 		*/
 		List<PersonalVO> list = new ArrayList<>();
 		PersonalVO vo = new PersonalVO();
@@ -97,81 +69,121 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 		return list;
 	}
 
-	/**
-	 * 아이핀 API호출
-	 */
 	@Override
 	public List<PersonalVO> pbaSearch(String personalNumber){
         Call<ApiResponse<List<PersonalVO>>> call = retrofitCertifiService.searchPersonMobile();
-        try {
-        	Response<ApiResponse<List<PersonalVO>>> response = call.execute();
-        	return handleApiResponse(response, "pbaSearch");
-        } catch (SocketTimeoutException e) {
-            log.error("[pbaSearch] API 응답 시간 초과", e);
-            throw new VpsException(VpsExceptionType.API_TIMEOUT);
-        } catch (ConnectException e) {
-            log.error("[pbaSearch] API 서버 연결 실패", e);
-            throw new VpsException(VpsExceptionType.API_CONNECTION_REFUSED);
-        } catch (IOException e) {
-            log.error("[pbaSearch] API 호출 중 IO 오류 발생", e);
-            throw new VpsException(VpsExceptionType.API_SERVER_ERROR);
-        }
+        return executeApiCall(call, "pbaSearch", "/IF-VPS-002");
 	}
 
-	/**
-	 * 원패스 API호출
-	 */
 	@Override
 	public List<PersonalVO> onepassSearch(String personalNumber){
         Call<ApiResponse<List<PersonalVO>>> call = retrofitCertifiService.searchPersonMobile();
-        try {
-        	Response<ApiResponse<List<PersonalVO>>> response = call.execute();
-        	return handleApiResponse(response, "onepassSearch");
-        } catch (SocketTimeoutException e) {
-            log.error("[onepassSearch] API 응답 시간 초과", e);
-            throw new VpsException(VpsExceptionType.API_TIMEOUT);
-        } catch (ConnectException e) {
-            log.error("[onepassSearch] API 서버 연결 실패", e);
-            throw new VpsException(VpsExceptionType.API_CONNECTION_REFUSED);
-        } catch (IOException e) {
-            log.error("[onepassSearch] API 호출 중 IO 오류 발생", e);
-            throw new VpsException(VpsExceptionType.API_SERVER_ERROR);
-        }
+        return executeApiCall(call, "onepassSearch", "/IF-VPS-002");
 	}
 
-	/**
-	 * 개인정보 노출자 사고예방시스템 등록
-	 */
 	@Override
 	public String updateExposureText(String exposureText, String vctmAplySn) {
 		return exposureText;
 	}
 
 	/**
-	 * API 응답 공통 처리
+	 * Retrofit API 호출 공통 메서드.
+	 * 통신 오류를 종류별로 분류하여 우리 서버/외부 서버/네트워크 원인을 서버 로그에 남긴다.
 	 */
-	private List<PersonalVO> handleApiResponse(Response<ApiResponse<List<PersonalVO>>> response, String methodName) {
-		if (response == null || !response.isSuccessful()) {
-			log.error("[{}] API 응답 실패 - HTTP 상태: {}", methodName,
-					response != null ? response.code() : "null");
-			throw new VpsException(VpsExceptionType.API_SERVER_ERROR);
+	private List<PersonalVO> executeApiCall(
+			Call<ApiResponse<List<PersonalVO>>> call, String methodName, String apiPath) {
+
+		log.info("[{}] 외부 API 호출 시작 - api={}, path={}", methodName, API_NAME, apiPath);
+		long startTime = System.currentTimeMillis();
+
+		try {
+			Response<ApiResponse<List<PersonalVO>>> response = call.execute();
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.info("[{}] 외부 API 응답 수신 - api={}, path={}, httpStatus={}, elapsed={}ms",
+					methodName, API_NAME, apiPath, response.code(), elapsed);
+
+			return handleApiResponse(response, methodName, apiPath);
+
+		} catch (SocketTimeoutException e) {
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[{}] [원인:외부서버] API 응답 시간 초과 - api={}, path={}, elapsed={}ms, error={}",
+					methodName, API_NAME, apiPath, elapsed, e.getMessage());
+			throw new VpsException(VpsExceptionType.API_TIMEOUT,
+					String.format("path=%s, elapsed=%dms", apiPath, elapsed), API_NAME);
+
+		} catch (ConnectException e) {
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[{}] [원인:외부서버] API 서버 연결 실패(서버 다운 또는 포트 미오픈) - api={}, path={}, elapsed={}ms, error={}",
+					methodName, API_NAME, apiPath, elapsed, e.getMessage());
+			throw new VpsException(VpsExceptionType.API_CONNECTION_REFUSED,
+					String.format("path=%s, error=%s", apiPath, e.getMessage()), API_NAME);
+
+		} catch (UnknownHostException e) {
+			log.error("[{}] [원인:네트워크] DNS 조회 실패(호스트명 확인 필요) - api={}, path={}, host={}",
+					methodName, API_NAME, apiPath, e.getMessage());
+			throw new VpsException(VpsExceptionType.API_DNS_ERROR,
+					String.format("path=%s, host=%s", apiPath, e.getMessage()), API_NAME);
+
+		} catch (SSLException e) {
+			log.error("[{}] [원인:외부서버] SSL/TLS 통신 오류(인증서 만료/불일치 확인 필요) - api={}, path={}, error={}",
+					methodName, API_NAME, apiPath, e.getMessage(), e);
+			throw new VpsException(VpsExceptionType.API_SSL_ERROR,
+					String.format("path=%s, error=%s", apiPath, e.getMessage()), API_NAME);
+
+		} catch (IOException e) {
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[{}] [원인:불명] API 호출 중 IO 오류 - api={}, path={}, elapsed={}ms, exType={}, error={}",
+					methodName, API_NAME, apiPath, elapsed, e.getClass().getSimpleName(), e.getMessage(), e);
+			throw new VpsException(VpsExceptionType.API_SERVER_ERROR,
+					String.format("path=%s, ioType=%s, error=%s", apiPath, e.getClass().getSimpleName(), e.getMessage()), API_NAME);
+		}
+	}
+
+	/**
+	 * API 응답 공통 처리.
+	 * HTTP 상태코드와 비즈니스 응답코드를 분리하여 어디서 에러가 발생했는지 명확히 로깅한다.
+	 */
+	private List<PersonalVO> handleApiResponse(
+			Response<ApiResponse<List<PersonalVO>>> response, String methodName, String apiPath) {
+
+		if (response == null) {
+			log.error("[{}] [원인:내부서버] API 응답 객체가 null - api={}, path={}", methodName, API_NAME, apiPath);
+			throw new VpsException(VpsExceptionType.API_EMPTY_RESPONSE,
+					"response=null, path=" + apiPath, API_NAME);
+		}
+
+		if (!response.isSuccessful()) {
+			String errorBody = null;
+			try {
+				if (response.errorBody() != null) {
+					errorBody = response.errorBody().string();
+				}
+			} catch (IOException ignored) {
+			}
+			log.error("[{}] [원인:외부서버] API HTTP 오류 응답 - api={}, path={}, httpStatus={}, errorBody={}",
+					methodName, API_NAME, apiPath, response.code(), errorBody);
+			throw new VpsException(VpsExceptionType.API_SERVER_ERROR,
+					String.format("path=%s, httpStatus=%d, errorBody=%s", apiPath, response.code(), errorBody), API_NAME);
 		}
 
 		ApiResponse<List<PersonalVO>> res = response.body();
 		if (res == null) {
-			log.error("[{}] API 응답 본문이 null입니다.", methodName);
-			throw new VpsException(VpsExceptionType.API_EMPTY_RESPONSE);
+			log.error("[{}] [원인:외부서버] API 응답 본문 파싱 결과 null(응답 형식 불일치) - api={}, path={}, httpStatus={}",
+					methodName, API_NAME, apiPath, response.code());
+			throw new VpsException(VpsExceptionType.API_EMPTY_RESPONSE,
+					"body=null, path=" + apiPath, API_NAME);
 		}
 
 		if ("000".equals(res.getResultCode())) {
-			log.info("[{}] API 호출 성공", methodName);
+			log.info("[{}] 외부 API 처리 성공 - api={}, path={}", methodName, API_NAME, apiPath);
 			List<PersonalVO> result = res.getResult();
-			// 호출부의 NPE 방지를 위해 result가 null이면 빈 목록을 반환한다.
 			return result != null ? result : new ArrayList<>();
 		} else {
-			log.warn("[{}] API 응답 실패 - 응답코드: {}, 응답메시지: {}",
-					methodName, res.getResultCode(), res.getResultMsg());
-			throw new VpsException(VpsExceptionType.API_SERVER_ERROR, res.getResultMsg());
+			log.warn("[{}] [원인:외부서버] API 업무 처리 실패 - api={}, path={}, resultCode={}, resultMsg={}",
+					methodName, API_NAME, apiPath, res.getResultCode(), res.getResultMsg());
+			throw new VpsException(VpsExceptionType.API_BUSINESS_ERROR,
+					String.format("path=%s, resultCode=%s, resultMsg=%s",
+							apiPath, res.getResultCode(), res.getResultMsg()), API_NAME);
 		}
 	}
 

@@ -31,10 +31,19 @@ public class RetrofitConfig {
 
     @Bean(name = "certifiRetrofit")
     public Retrofit CertifiRetrofit() {
+        String baseUrl = certifiProperties.getBaseUrl();
+        String apiKey = certifiProperties.getApiKey();
+
+        if (baseUrl == null || baseUrl.isBlank()) {
+            log.error("[RetrofitConfig] [원인:내부서버] data.api.certifi.base-url 설정값 누락 - application-api.yml 확인 필요");
+            throw new IllegalStateException("data.api.certifi.base-url 설정이 없습니다.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            log.error("[RetrofitConfig] [원인:내부서버] data.api.certifi.api-key 설정값 누락 - application-api.yml 확인 필요");
+            throw new IllegalStateException("data.api.certifi.api-key 설정이 없습니다.");
+        }
+
         try {
-            // 외부 인증 API는 주민등록번호/CI/DI/이름/연락처 등 민감 개인정보를 주고받으므로
-            // 요청/응답 본문(BODY)과 헤더(HEADERS, API_KEY 포함)는 로그에 남기지 않는다.
-            // BASIC: 메서드/URL/응답코드/소요시간만 기록(개인정보·인증키 미노출).
             HttpLoggingInterceptor loggingInterceptor = new HttpLoggingInterceptor(message ->
                 log.debug("[OkHttp] {}", message)
             );
@@ -46,7 +55,7 @@ public class RetrofitConfig {
                     .addInterceptor(chain -> {
                         Request original = chain.request();
                         Request request = original.newBuilder()
-                                .header("API_KEY", certifiProperties.getApiKey())
+                                .header("API_KEY", apiKey)
                                 .method(original.method(), original.body())
                                 .build();
                         return chain.proceed(request);
@@ -57,16 +66,16 @@ public class RetrofitConfig {
                     .build();
 
             Retrofit retrofit = new Retrofit.Builder()
-                    .baseUrl(certifiProperties.getBaseUrl())
+                    .baseUrl(baseUrl)
                     .client(client)
                     .addConverterFactory(ScalarsConverterFactory.create())
                     .addConverterFactory(JacksonConverterFactory.create())
                     .build();
 
-            log.info("[RetrofitConfig] Retrofit 클라이언트 초기화 완료 - baseUrl: {}", certifiProperties.getBaseUrl());
+            log.info("[RetrofitConfig] certifi Retrofit 초기화 완료 - baseUrl={}", baseUrl);
             return retrofit;
         } catch (Exception e) {
-            log.error("[RetrofitConfig] Retrofit 클라이언트 초기화 실패", e);
+            log.error("[RetrofitConfig] [원인:내부서버] Retrofit 클라이언트 초기화 실패 - baseUrl={}", baseUrl, e);
             throw e;
         }
     }

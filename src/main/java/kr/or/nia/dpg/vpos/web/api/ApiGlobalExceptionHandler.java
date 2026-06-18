@@ -10,34 +10,110 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
+
+import javax.net.ssl.SSLException;
+
 @RestControllerAdvice(basePackages = "kr.or.nia.dpg.vpos.web.api")
 @Slf4j
 public class ApiGlobalExceptionHandler {
 
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<String> handleRuntimeException(RuntimeException ex) {
-        log.error("[ApiGlobalExceptionHandler] RuntimeException 발생", ex);
-        return ResponseEntity.internalServerError().body("오류가 발생했습니다.");
+    @ExceptionHandler(VpsException.class)
+    public ResponseEntity<Map<String, Object>> handleVpsException(VpsException ex) {
+        VpsExceptionType type = ex.getType();
+        HttpStatus status = type.getHttpStatus();
+        VpsExceptionType.ErrorOrigin origin = type.getOrigin();
+
+        switch (origin) {
+            case EXTERNAL:
+                log.error("[API예외:외부서버] type={}, api={}, detail={}, message={}",
+                        type.name(),
+                        ex.getExternalApiName() != null ? ex.getExternalApiName() : "unknown",
+                        ex.getDetail(),
+                        type.getMessage());
+                break;
+            case NETWORK:
+                log.error("[API예외:네트워크] type={}, api={}, detail={} - 네트워크 경로 확인 필요",
+                        type.name(),
+                        ex.getExternalApiName() != null ? ex.getExternalApiName() : "unknown",
+                        ex.getDetail());
+                break;
+            case INTERNAL:
+                log.error("[API예외:내부서버] type={}, detail={}, message={}",
+                        type.name(), ex.getDetail(), type.getMessage(), ex);
+                break;
+            case CLIENT:
+                log.warn("[API예외:클라이언트] type={}, detail={}", type.name(), ex.getDetail());
+                break;
+            default:
+                log.error("[API예외] type={}, detail={}", type.name(), ex.getDetail(), ex);
+        }
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", type.name());
+        body.put("origin", origin.name());
+        body.put("message", ex.getMessage());
+        if (ex.getDetail() != null) {
+            body.put("detail", ex.getDetail());
+        }
+
+        return ResponseEntity.status(status).body(body);
+    }
+
+    @ExceptionHandler(SocketTimeoutException.class)
+    public ResponseEntity<Map<String, Object>> handleSocketTimeout(SocketTimeoutException ex) {
+        log.error("[API예외:외부서버] 외부 API 응답 시간 초과 - {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.GATEWAY_TIMEOUT, "EXTERNAL",
+                "API_TIMEOUT", "외부 API 서버가 응답 시간을 초과했습니다.");
+    }
+
+    @ExceptionHandler(ConnectException.class)
+    public ResponseEntity<Map<String, Object>> handleConnectException(ConnectException ex) {
+        log.error("[API예외:외부서버] 외부 API 서버 연결 실패 - {}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL",
+                "API_CONNECTION_REFUSED", "외부 API 서버에 연결할 수 없습니다.");
+    }
+
+    @ExceptionHandler(UnknownHostException.class)
+    public ResponseEntity<Map<String, Object>> handleUnknownHost(UnknownHostException ex) {
+        log.error("[API예외:네트워크] DNS 조회 실패 - host={}", ex.getMessage());
+        return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "NETWORK",
+                "API_DNS_ERROR", "외부 API 서버 도메인을 찾을 수 없습니다.");
+    }
+
+    @ExceptionHandler(SSLException.class)
+    public ResponseEntity<Map<String, Object>> handleSSLException(SSLException ex) {
+        log.error("[API예외:외부서버] SSL 통신 오류 - {}", ex.getMessage(), ex);
+        return buildErrorResponse(HttpStatus.BAD_GATEWAY, "EXTERNAL",
+                "API_SSL_ERROR", "외부 API 서버와 SSL 통신에 실패했습니다.");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         FieldError error = (FieldError) ex.getBindingResult().getAllErrors().get(0);
-        log.error("[ApiGlobalExceptionHandler] 요청 파라미터 검증 실패 - field: {}, message: {}",
+        log.warn("[API예외:클라이언트] 요청 파라미터 검증 실패 - field={}, message={}",
                 error.getField(), error.getDefaultMessage());
-        return ResponseEntity.badRequest().body(error.getDefaultMessage());
+        return buildErrorResponse(HttpStatus.BAD_REQUEST, "CLIENT",
+                "VALIDATION_ERROR", error.getDefaultMessage());
     }
 
-    @ExceptionHandler(VpsException.class)
-    public ResponseEntity<String> handleVpsException(VpsException ex) {
-        VpsExceptionType type = ex.getType();
-        HttpStatus status = type.getHttpStatus();
-        // 서버 오류(5xx)만 error 레벨로 남기고, 클라이언트/업무성 예외(4xx 등)는 warn으로 남겨 로그 노이즈를 줄인다.
-        if (status.is5xxServerError()) {
-            log.error("[ApiGlobalExceptionHandler] VpsException 발생 - type: {}, detail: {}", type.name(), ex.getDetail());
-        } else {
-            log.warn("[ApiGlobalExceptionHandler] VpsException 발생 - type: {}, detail: {}", type.name(), ex.getDetail());
-        }
-        return ResponseEntity.status(status).body(ex.getMessage());
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        log.error("[API예외:내부서버] 예상치 못한 오류 발생", ex);
+        return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL",
+                "INTERNAL_ERROR", "서버 내부 오류가 발생했습니다.");
+    }
+
+    private ResponseEntity<Map<String, Object>> buildErrorResponse(
+            HttpStatus status, String origin, String errorCode, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("error", errorCode);
+        body.put("origin", origin);
+        body.put("message", message);
+        return ResponseEntity.status(status).body(body);
     }
 }

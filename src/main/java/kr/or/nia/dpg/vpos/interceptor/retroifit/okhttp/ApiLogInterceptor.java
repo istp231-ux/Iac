@@ -1,8 +1,12 @@
 package kr.or.nia.dpg.vpos.interceptor.retroifit.okhttp;
 
 import java.io.IOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.UUID;
 
+import javax.net.ssl.SSLException;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.dao.DataAccessException;
@@ -49,14 +53,42 @@ public class ApiLogInterceptor implements Interceptor {
 	public Response intercept(Chain chain) throws IOException {
 		Request request = chain.request();
 		String traceId = UUID.randomUUID().toString();
+		long startTime = System.currentTimeMillis();
 
 		Response response;
 		try {
 			response = chain.proceed(request);
+		} catch (SocketTimeoutException e) {
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[ApiLogInterceptor] [원인:외부서버] API 응답 시간 초과 - traceId={}, url={}, elapsed={}ms",
+					traceId, request.url(), elapsed);
+			safeSaveRawLog(traceId, "SocketTimeoutException: " + e.getMessage());
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
+			throw e;
+		} catch (ConnectException e) {
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[ApiLogInterceptor] [원인:외부서버] API 서버 연결 실패 - traceId={}, url={}, elapsed={}ms, error={}",
+					traceId, request.url(), elapsed, e.getMessage());
+			safeSaveRawLog(traceId, "ConnectException: " + e.getMessage());
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
+			throw e;
+		} catch (UnknownHostException e) {
+			log.error("[ApiLogInterceptor] [원인:네트워크] DNS 조회 실패 - traceId={}, url={}, host={}",
+					traceId, request.url(), e.getMessage());
+			safeSaveRawLog(traceId, "UnknownHostException: " + e.getMessage());
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
+			throw e;
+		} catch (SSLException e) {
+			log.error("[ApiLogInterceptor] [원인:외부서버] SSL 통신 오류 - traceId={}, url={}, error={}",
+					traceId, request.url(), e.getMessage(), e);
+			safeSaveRawLog(traceId, "SSLException: " + e.getMessage());
+			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
+			throw e;
 		} catch (IOException e) {
-			// 통신 자체 실패 - 비즈니스적으로 의미가 있으므로 기록 후 그대로 전파한다.
-			log.error("[ApiLogInterceptor] API 호출 실패 - traceId={}, url={}", traceId, request.url(), e);
-			safeSaveRawLog(traceId, "IOException: " + e.getMessage());
+			long elapsed = System.currentTimeMillis() - startTime;
+			log.error("[ApiLogInterceptor] [원인:불명] API 호출 IO 오류 - traceId={}, url={}, elapsed={}ms, exType={}, error={}",
+					traceId, request.url(), elapsed, e.getClass().getSimpleName(), e.getMessage(), e);
+			safeSaveRawLog(traceId, e.getClass().getSimpleName() + ": " + e.getMessage());
 			ApiLogContext.set(new ApiLogContext.LogData(traceId, 0));
 			throw e;
 		}
