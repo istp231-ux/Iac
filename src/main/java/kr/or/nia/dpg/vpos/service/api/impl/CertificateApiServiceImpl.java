@@ -126,14 +126,14 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 
 		} catch (SSLException e) {
 			log.error("[{}] [원인:외부서버] SSL/TLS 통신 오류(인증서 만료/불일치 확인 필요) - api={}, path={}, error={}",
-					methodName, API_NAME, apiPath, e.getMessage(), e);
+					methodName, API_NAME, apiPath, e.getMessage());
 			throw new VpsException(VpsExceptionType.API_SSL_ERROR,
 					String.format("path=%s, error=%s", apiPath, e.getMessage()), API_NAME);
 
 		} catch (IOException e) {
 			long elapsed = System.currentTimeMillis() - startTime;
 			log.error("[{}] [원인:불명] API 호출 중 IO 오류 - api={}, path={}, elapsed={}ms, exType={}, error={}",
-					methodName, API_NAME, apiPath, elapsed, e.getClass().getSimpleName(), e.getMessage(), e);
+					methodName, API_NAME, apiPath, elapsed, e.getClass().getSimpleName(), e.getMessage());
 			throw new VpsException(VpsExceptionType.API_SERVER_ERROR,
 					String.format("path=%s, ioType=%s, error=%s", apiPath, e.getClass().getSimpleName(), e.getMessage()), API_NAME);
 		}

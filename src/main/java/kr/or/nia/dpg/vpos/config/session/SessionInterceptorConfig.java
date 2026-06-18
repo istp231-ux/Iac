@@ -43,7 +43,7 @@ public class SessionInterceptorConfig implements WebMvcConfigurer {
 					);
 			log.info("[SessionInterceptorConfig] 세션 인터셉터 등록 완료");
 		} catch (Exception e) {
-			log.error("[SessionInterceptorConfig] 세션 인터셉터 등록 실패", e);
+			log.error("[SessionInterceptorConfig] 세션 인터셉터 등록 실패 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
 		}
 	}
 

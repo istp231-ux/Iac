@@ -38,24 +38,27 @@ public class ApiGlobalExceptionHandler {
                         ex.getExternalApiName() != null ? ex.getExternalApiName() : "unknown",
                         ex.getDetail(),
                         type.getMessage(),
-                        reqInfo, ex);
+                        reqInfo);
                 break;
             case NETWORK:
                 log.error("[API예외:네트워크] type={}, api={}, detail={}, {} - 네트워크 경로 확인 필요",
                         type.name(),
                         ex.getExternalApiName() != null ? ex.getExternalApiName() : "unknown",
                         ex.getDetail(),
-                        reqInfo, ex);
+                        reqInfo);
                 break;
             case INTERNAL:
-                log.error("[API예외:내부서버] type={}, detail={}, message={}, {}",
-                        type.name(), ex.getDetail(), type.getMessage(), reqInfo, ex);
+                log.error("[API예외:내부서버] type={}, detail={}, message={}, exType={}, exMsg={}, {}",
+                        type.name(), ex.getDetail(), type.getMessage(),
+                        ex.getClass().getSimpleName(), ex.getMessage(), reqInfo);
                 break;
             case CLIENT:
                 log.warn("[API예외:클라이언트] type={}, detail={}, {}", type.name(), ex.getDetail(), reqInfo);
                 break;
             default:
-                log.error("[API예외] type={}, detail={}, {}", type.name(), ex.getDetail(), reqInfo, ex);
+                log.error("[API예외] type={}, detail={}, exType={}, exMsg={}, {}",
+                        type.name(), ex.getDetail(),
+                        ex.getClass().getSimpleName(), ex.getMessage(), reqInfo);
         }
 
         Map<String, Object> body = new HashMap<>();
@@ -72,7 +75,8 @@ public class ApiGlobalExceptionHandler {
     @ExceptionHandler(SocketTimeoutException.class)
     public ResponseEntity<Map<String, Object>> handleSocketTimeout(
             SocketTimeoutException ex, HttpServletRequest request) {
-        log.error("[API예외:외부서버] 외부 API 응답 시간 초과 - error={}, {}", ex.getMessage(), describeRequest(request), ex);
+        log.error("[API예외:외부서버] 외부 API 응답 시간 초과 - exType={}, error={}, {}",
+                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request));
         return buildErrorResponse(HttpStatus.GATEWAY_TIMEOUT, "EXTERNAL",
                 "API_TIMEOUT", "외부 API 서버가 응답 시간을 초과했습니다.");
     }
@@ -80,7 +84,8 @@ public class ApiGlobalExceptionHandler {
     @ExceptionHandler(ConnectException.class)
     public ResponseEntity<Map<String, Object>> handleConnectException(
             ConnectException ex, HttpServletRequest request) {
-        log.error("[API예외:외부서버] 외부 API 서버 연결 실패 - error={}, {}", ex.getMessage(), describeRequest(request), ex);
+        log.error("[API예외:외부서버] 외부 API 서버 연결 실패 - exType={}, error={}, {}",
+                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request));
         return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "EXTERNAL",
                 "API_CONNECTION_REFUSED", "외부 API 서버에 연결할 수 없습니다.");
     }
@@ -88,7 +93,8 @@ public class ApiGlobalExceptionHandler {
     @ExceptionHandler(UnknownHostException.class)
     public ResponseEntity<Map<String, Object>> handleUnknownHost(
             UnknownHostException ex, HttpServletRequest request) {
-        log.error("[API예외:네트워크] DNS 조회 실패 - host={}, {}", ex.getMessage(), describeRequest(request), ex);
+        log.error("[API예외:네트워크] DNS 조회 실패 - host={}, {}",
+                ex.getMessage(), describeRequest(request));
         return buildErrorResponse(HttpStatus.SERVICE_UNAVAILABLE, "NETWORK",
                 "API_DNS_ERROR", "외부 API 서버 도메인을 찾을 수 없습니다.");
     }
@@ -96,7 +102,8 @@ public class ApiGlobalExceptionHandler {
     @ExceptionHandler(SSLException.class)
     public ResponseEntity<Map<String, Object>> handleSSLException(
             SSLException ex, HttpServletRequest request) {
-        log.error("[API예외:외부서버] SSL 통신 오류 - error={}, {}", ex.getMessage(), describeRequest(request), ex);
+        log.error("[API예외:외부서버] SSL 통신 오류 - exType={}, error={}, {}",
+                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request));
         return buildErrorResponse(HttpStatus.BAD_GATEWAY, "EXTERNAL",
                 "API_SSL_ERROR", "외부 API 서버와 SSL 통신에 실패했습니다.");
     }
@@ -116,7 +123,7 @@ public class ApiGlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleRuntimeException(
             RuntimeException ex, HttpServletRequest request) {
         log.error("[API예외:내부서버] 예상치 못한 오류 발생 - exType={}, error={}, {}",
-                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request), ex);
+                ex.getClass().getSimpleName(), ex.getMessage(), describeRequest(request));
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL",
                 "INTERNAL_ERROR", "서버 내부 오류가 발생했습니다.");
     }

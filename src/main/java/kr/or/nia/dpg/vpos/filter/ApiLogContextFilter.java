@@ -39,7 +39,7 @@ public class ApiLogContextFilter extends OncePerRequestFilter {
 				ApiLogContext.clear();
 			} catch (Exception e) {
 				// clear 실패가 응답 처리를 막아서는 안 된다.
-				log.warn("[ApiLogContextFilter] ApiLogContext 정리 중 오류", e);
+				log.warn("[ApiLogContextFilter] ApiLogContext 정리 중 오류 - exType={}, error={}", e.getClass().getSimpleName(), e.getMessage());
 			}
 		}
 	}
