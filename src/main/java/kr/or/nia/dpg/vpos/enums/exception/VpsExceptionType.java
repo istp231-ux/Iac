@@ -18,7 +18,7 @@ public enum VpsExceptionType {
     , API_CONNECTION_REFUSED(HttpStatus.SERVICE_UNAVAILABLE, "API 서버 연결에 실패했습니다.", ErrorOrigin.EXTERNAL)
     , API_EMPTY_RESPONSE(HttpStatus.INTERNAL_SERVER_ERROR, "API 응답 본문이 없습니다.", ErrorOrigin.EXTERNAL)
     , API_RESPONSE_PARSE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "API 응답 파싱에 실패했습니다.", ErrorOrigin.EXTERNAL)
-    , API_BUSINESS_ERROR(HttpStatus.BAD_GATEWAY, "외부 API 업무 처리가 실패했습니다.", ErrorOrigin.EXTERNAL)
+    , API_RESULT_CODE_ERROR(HttpStatus.BAD_GATEWAY, "외부 API 응답 결과코드가 실패입니다.", ErrorOrigin.EXTERNAL)
     , API_SSL_ERROR(HttpStatus.BAD_GATEWAY, "API 서버 SSL 인증에 실패했습니다.", ErrorOrigin.EXTERNAL)
     , API_DNS_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "API 서버 도메인 조회에 실패했습니다.", ErrorOrigin.NETWORK)
 

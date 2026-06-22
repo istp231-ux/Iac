@@ -181,7 +181,7 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 		} else {
 			log.warn("[{}] [원인:외부서버] API 업무 처리 실패 - api={}, path={}, resultCode={}, resultMsg={}",
 					methodName, API_NAME, apiPath, res.getResultCode(), res.getResultMsg());
-			throw new VpsException(VpsExceptionType.API_BUSINESS_ERROR,
+			throw new VpsException(VpsExceptionType.API_RESULT_CODE_ERROR,
 					String.format("path=%s, resultCode=%s, resultMsg=%s",
 							apiPath, res.getResultCode(), res.getResultMsg()), API_NAME);
 		}
