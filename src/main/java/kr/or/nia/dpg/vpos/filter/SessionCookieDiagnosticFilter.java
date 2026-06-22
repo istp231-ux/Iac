@@ -81,12 +81,14 @@ public class SessionCookieDiagnosticFilter extends OncePerRequestFilter {
 
 	/**
 	 * 인증 흐름과 무관한 정적 리소스 등은 진단 대상에서 제외한다.
+	 * <p>getRequestURI()는 context-path(/vpos)를 포함하므로,
+	 * contains()로 경로 패턴을 검사한다.</p>
 	 */
 	private boolean isAuthFlowPath(String uri) {
 		if (uri == null) {
 			return false;
 		}
-		return uri.startsWith("/api/") || uri.startsWith("/view/");
+		return uri.contains("/api/") || uri.contains("/view/");
 	}
 
 	/**

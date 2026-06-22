@@ -4,6 +4,13 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 
+/**
+ * VPOS 도메인 예외 유형 정의.
+ *
+ * <p>각 예외 타입은 HTTP 상태코드, 사용자 메시지, 오류 원인({@link ErrorOrigin})을 가진다.
+ * ErrorOrigin은 예외 발생 시 서버 로그에 원인 태그([원인:외부서버], [원인:내부서버] 등)로 기록되어
+ * 우리 서버/외부 서버/네트워크/클라이언트 중 어디에서 문제가 발생했는지 즉시 식별할 수 있다.</p>
+ */
 @Getter
 @RequiredArgsConstructor
 public enum VpsExceptionType {
@@ -42,6 +49,15 @@ public enum VpsExceptionType {
     private final String message;
     private final ErrorOrigin origin;
 
+    /**
+     * 오류 원인 분류.
+     * <ul>
+     *   <li>INTERNAL : 우리 서버 내부 오류 (설정, DB, 암호화 등)</li>
+     *   <li>EXTERNAL : 외부 API 서버 오류 (HTTP 에러, 응답 실패 등)</li>
+     *   <li>NETWORK  : 네트워크 구간 오류 (DNS, 라우팅 등)</li>
+     *   <li>CLIENT   : 클라이언트 입력 오류 (파라미터 검증 실패 등)</li>
+     * </ul>
+     */
     public enum ErrorOrigin {
         INTERNAL,
         EXTERNAL,

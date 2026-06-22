@@ -19,6 +19,18 @@ import retrofit2.converter.scalars.ScalarsConverterFactory;
 
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Retrofit HTTP 클라이언트 설정.
+ *
+ * <p>OkHttpClient 인터셉터 체인 순서:</p>
+ * <ol>
+ *   <li>HttpLoggingInterceptor — 요청/응답 기본 정보 로깅 (Level.BASIC: PII 보호를 위해 BODY 사용 금지)</li>
+ *   <li>ApiLogInterceptor — 응답 원본 암호화 후 DB 저장, traceId 생성</li>
+ *   <li>API_KEY 헤더 주입 인터셉터</li>
+ * </ol>
+ *
+ * <p>기동 시 baseUrl/apiKey 누락을 검증하여 설정 오류를 빠르게 감지한다.</p>
+ */
 // TODO 추후 삭제 필요
 @Configuration
 @RequiredArgsConstructor

@@ -25,8 +25,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 인증서 기반 본인인증 API 컨트롤러.
+ *
+ * <p>공동인증(1차), 휴대전화/아이핀/원패스(2차) 인증 흐름을 처리한다.
+ * 2차 인증 진입 시 1차 인증 세션 플래그를 검증하며,
+ * 실패 시 세션/쿠키/프록시 원인을 진단 로그로 남긴다.</p>
+ */
 // TODO 추후 삭제 필요
-// 인증 솔루션
 @Controller
 @Slf4j
 @RequestMapping({"api/certificate"})
@@ -44,7 +50,7 @@ public class ApiCertificateController {
         this.appMapper = appMapper;
     }
 
-    // 공동인증 API호출 (1차 인증)
+    /** 공동인증서 API 호출 (1차 인증). 성공 시 세션에 1차 인증 완료 플래그를 저장한다. */
     @PostMapping("/openCertifiWindow")
     public ResponseEntity<Map<String, Object>> openCertifiWindow(
             @RequestBody Map<String, String> requestData, HttpServletRequest request) {
@@ -66,7 +72,7 @@ public class ApiCertificateController {
         return ResponseEntity.ok(responseData);
     }
 
-    // 휴대전화인증 API호출 (2차 인증)
+    /** 휴대전화 인증 API 호출 (2차 인증). 진입 전 1차 인증 완료 여부를 검증한다. */
     @PostMapping("/openPhonePCCWindow")
     public ResponseEntity<Map<String, Object>> openPhonePCCWindow(
             @RequestBody Map<String, String> requestData, HttpServletRequest request) {
@@ -88,7 +94,7 @@ public class ApiCertificateController {
         return ResponseEntity.ok(responseData);
     }
 
-    // 아이핀인증 API호출
+    /** 아이핀 인증 API 호출. 인증 결과를 DB에 저장(upsert)한다. */
     @PostMapping("/openCBAWindow")
     public ResponseEntity<Map<String, Object>> openCBAWindow(
             @RequestBody Map<String, String> requestData, HttpServletRequest request) {
@@ -107,7 +113,7 @@ public class ApiCertificateController {
         return ResponseEntity.ok(responseData);
     }
 
-    // 디지털원패스인증 API호출
+    /** 디지털원패스 인증 API 호출. 인증 결과를 DB에 저장(upsert)한다. */
     @PostMapping("/openPassWindow")
     public ResponseEntity<Map<String, Object>> openPassWindow(
             @RequestBody Map<String, String> requestData, HttpServletRequest request) {
@@ -209,6 +215,7 @@ public class ApiCertificateController {
         return session != null ? session.getId() : "NO_SESSION";
     }
 
+    /** 요청 데이터에서 personalNumber를 추출하고 빈 값 검증을 수행한다. */
     private String extractPersonalNumber(Map<String, String> requestData) {
         String personalNumber = requestData != null ? requestData.get("personalNumber") : null;
         if (personalNumber == null || personalNumber.trim().isEmpty()) {
@@ -218,6 +225,7 @@ public class ApiCertificateController {
         return personalNumber.trim();
     }
 
+    /** API 응답 리스트에서 첫 번째 결과를 반환한다. 비어있으면 NO_DATA 예외를 던진다. */
     private PersonalVO firstOrThrow(List<PersonalVO> personalInfoList, String methodName) {
         if (personalInfoList == null || personalInfoList.isEmpty()) {
             log.warn("[{}] [원인:외부서버] 인증 API 응답에 데이터가 없습니다.", methodName);
@@ -227,6 +235,7 @@ public class ApiCertificateController {
         return personalInfoList.get(0);
     }
 
+    /** 인증 결과 VO에서 클라이언트 응답용 Map을 구성한다. */
     private Map<String, Object> buildPersonalResponse(PersonalVO personal) {
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("personalName", personal.getPersonalName());
@@ -238,6 +247,7 @@ public class ApiCertificateController {
         return responseData;
     }
 
+    /** 주민등록번호 7번째 자리로 성별을 판별한다. korean=true이면 "남자"/"여자", false이면 "M"/"F". */
     private String resolveGender(String personalNumber, boolean korean) {
         if (personalNumber.length() < SSN_MIN_LENGTH) {
             log.warn("[ApiCertificateController] 주민등록번호 형식이 올바르지 않습니다. (length 부족)");
@@ -250,6 +260,7 @@ public class ApiCertificateController {
         return isMale ? "M" : "F";
     }
 
+    /** 개인정보 및 앱 정보를 CI 기준으로 DB에 upsert한다. */
     private void upsertPersonalAndApp(PersonalVO personal, String methodName) {
         String ci = personal.getCI();
         if (ci == null || ci.trim().isEmpty()) {
@@ -287,6 +298,7 @@ public class ApiCertificateController {
         }
     }
 
+    /** 주민등록번호 앞 6자리 + 성별코드로 만 나이를 계산한다. 파싱 실패 시 0을 반환한다. */
     public int ageChange(String personalNumber) {
         if (personalNumber == null || personalNumber.length() < SSN_MIN_LENGTH) {
             log.warn("[ageChange] 주민등록번호가 유효하지 않아 나이를 계산할 수 없습니다.");

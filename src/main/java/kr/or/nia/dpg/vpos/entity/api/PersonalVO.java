@@ -3,13 +3,14 @@ package kr.or.nia.dpg.vpos.entity.api;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+/** 본인인증 결과 개인정보 VO. CI/DI는 외부 인증기관이 발급한 연계정보/중복가입확인정보이다. */
 // TODO 삭제 필요
 @Getter
 @Setter
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
-public class PersonalVO{
+public class PersonalVO {
 
 	private int vctmAplySn;
 	private String certifiDate;

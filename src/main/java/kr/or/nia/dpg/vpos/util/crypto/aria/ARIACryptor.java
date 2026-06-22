@@ -12,6 +12,14 @@ import java.security.Security;
 import java.util.Base64;
 import java.util.Map;
 
+/**
+ * ARIA 블록 암호 유틸리티 (ECB 모드, PKCS7 패딩).
+ *
+ * <p>BouncyCastle 프로바이더를 사용하며, 암호화 키는 용도별(kait, log)로 구분하여
+ * application.yml의 {@code encryption.aria.keys.*}에서 Base64 인코딩된 값을 로드한다.</p>
+ *
+ * <p>주로 외부 API 응답 원본을 DB에 저장할 때 암호화하는 데 사용된다.</p>
+ */
 @Slf4j
 @Component
 public class ARIACryptor {
@@ -37,6 +45,7 @@ public class ARIACryptor {
         );
     }
 
+    /** 평문을 ARIA로 암호화하여 Base64 문자열로 반환한다. null/빈 값이면 빈 문자열을 반환한다. */
     public String encrypt(String plainText, String keyName) {
         if (plainText == null || plainText.isEmpty()) {
             log.warn("[ARIACryptor] 암호화 대상 문자열이 null 또는 빈 값입니다. keyName={}", keyName);
@@ -55,6 +64,7 @@ public class ARIACryptor {
         }
     }
 
+    /** Base64 암호문을 ARIA로 복호화하여 평문을 반환한다. null/빈 값이면 빈 문자열을 반환한다. */
     public String decrypt(String cipherText, String keyName) {
         if (cipherText == null || cipherText.isEmpty()) {
             log.warn("[ARIACryptor] 복호화 대상 문자열이 null 또는 빈 값입니다. keyName={}", keyName);

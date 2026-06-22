@@ -10,10 +10,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+/**
+ * View 컨트롤러 전역 예외 핸들러.
+ *
+ * <p>UNAUTHORIZED(세션 만료)는 안내 모달로 이동시키고,
+ * 그 외 예외는 ErrorOrigin에 따라 원인 태그를 붙여 서버 로그에 기록한 뒤 상위로 전파한다.</p>
+ */
 @ControllerAdvice(basePackages = "kr.or.nia.dpg.vpos.web.view")
 @Slf4j
 public class ViewGlobalExceptionHandler {
 
+    /** VpsException 처리 — UNAUTHORIZED면 세션만료 모달, 그 외는 원인 로그 후 재throw */
     @ExceptionHandler(VpsException.class)
     public String handleVpsException(VpsException ex, Model model, HttpServletRequest request) {
         VpsExceptionType type = ex.getType();
@@ -32,9 +39,10 @@ public class ViewGlobalExceptionHandler {
 
         model.addAttribute("message", "세션이 만료되었습니다. 처음 화면으로 이동합니다.");
         model.addAttribute("redirectUrl", "/vpos/main");
-         return "view/session-timeout-msg-modal";
+        return "view/session-timeout-msg-modal";
     }
 
+    /** 예상치 못한 RuntimeException — 에러 모달로 이동 */
     @ExceptionHandler(RuntimeException.class)
     public String handleRuntimeException(RuntimeException ex, Model model, HttpServletRequest request) {
         log.error("[View예외:내부서버] 예상치 못한 오류 - exType={}, error={}, {}",

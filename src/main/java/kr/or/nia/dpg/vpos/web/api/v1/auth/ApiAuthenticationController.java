@@ -14,11 +14,19 @@ import kr.or.nia.dpg.vpos.dto.SessionUser;
 import kr.or.nia.dpg.vpos.util.SessionUserUtil;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 인증 흐름 API 컨트롤러 (v1).
+ *
+ * <p>/certificate(1차 인증)와 /simple(2차 간편인증)로 구성된다.
+ * 2차 인증 진입 시 1차 인증 세션 플래그를 검증하며,
+ * 실패 시 세션/쿠키/프록시 원인을 진단 로그로 남긴다.</p>
+ */
 @RestController
 @Slf4j
 @RequestMapping("/api/v1/auth")
 public class ApiAuthenticationController {
 
+	/** 공동/금융인증서 결과 수신 (1차 인증). 성공 시 세션에 1차 인증 완료 플래그를 저장한다. */
 	@PostMapping("/certificate")
 	public ResponseEntity<Map<String, Object>> processCertificateAuth(HttpServletRequest request) {
 		log.info("[1차인증] 공동/금융인증 결과 수신. {}", describeSession(request));
@@ -30,6 +38,7 @@ public class ApiAuthenticationController {
 		return ResponseEntity.ok(Map.of("success", true, "message", "공동/금융인증이 완료되었습니다."));
 	}
 
+	/** 간편인증 결과 수신 (2차 인증). 1차 인증 미완료 시 세션 진단 로그를 남긴다. */
 	@PostMapping("/simple")
 	public ResponseEntity<Map<String, Object>> processSimpleAuth(HttpServletRequest request) {
 		log.info("[2차인증] 간편인증 결과 수신. {}", describeSession(request));

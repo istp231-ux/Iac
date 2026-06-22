@@ -20,11 +20,22 @@ import java.util.List;
 
 import javax.net.ssl.SSLException;
 
+/**
+ * 인증서 API 서비스 구현체.
+ *
+ * <p>외부 인증서 API(공동인증, 휴대전화, 아이핀, 원패스)를 Retrofit으로 호출하고,
+ * 통신 오류를 5종(SocketTimeout, Connect, UnknownHost, SSL, IOException)으로 분류하여
+ * 우리 서버/외부 서버/네트워크 원인을 서버 로그에 명확히 기록한다.</p>
+ *
+ * <p>certificateSearch, phoneSearch는 현재 TODO(더미 데이터)로 구현됨.
+ * 실제 API 연동 시 주석 해제하여 executeApiCall()로 교체 필요.</p>
+ */
 // TODO 추후 삭제 필요
 @Slf4j
 @Service
 public class CertificateApiServiceImpl implements CertificateApiService {
 
+	/** 로그에 표시되는 API 식별 명칭 */
 	private static final String API_NAME = "인증서API(certifi)";
 
 	private final RetrofitCertifiService retrofitCertifiService;
@@ -141,7 +152,12 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 
 	/**
 	 * API 응답 공통 처리.
-	 * HTTP 상태코드와 비즈니스 응답코드를 분리하여 어디서 에러가 발생했는지 명확히 로깅한다.
+	 * HTTP 상태코드와 응답 결과코드(resultCode)를 분리하여 어디서 에러가 발생했는지 명확히 로깅한다.
+	 * <ul>
+	 *   <li>HTTP 4xx/5xx → [원인:외부서버] API HTTP 오류 응답</li>
+	 *   <li>body == null → [원인:외부서버] API 응답 본문 파싱 결과 null</li>
+	 *   <li>resultCode != "000" → [원인:외부서버] API 응답 결과코드 실패</li>
+	 * </ul>
 	 */
 	private List<PersonalVO> handleApiResponse(
 			Response<ApiResponse<List<PersonalVO>>> response, String methodName, String apiPath) {
@@ -179,7 +195,7 @@ public class CertificateApiServiceImpl implements CertificateApiService {
 			List<PersonalVO> result = res.getResult();
 			return result != null ? result : new ArrayList<>();
 		} else {
-			log.warn("[{}] [원인:외부서버] API 업무 처리 실패 - api={}, path={}, resultCode={}, resultMsg={}",
+			log.warn("[{}] [원인:외부서버] API 응답 결과코드 실패 - api={}, path={}, resultCode={}, resultMsg={}",
 					methodName, API_NAME, apiPath, res.getResultCode(), res.getResultMsg());
 			throw new VpsException(VpsExceptionType.API_RESULT_CODE_ERROR,
 					String.format("path=%s, resultCode=%s, resultMsg=%s",

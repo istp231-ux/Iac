@@ -10,6 +10,16 @@ import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactor
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Tomcat AJP 커넥터 설정.
+ *
+ * <p>{@code data.tomcat.ajp.enabled=true}일 때만 활성화되며,
+ * Apache/Nginx 리버스 프록시에서 AJP 프로토콜로 Tomcat에 연결할 수 있도록
+ * 추가 커넥터를 등록한다.</p>
+ *
+ * <p>scheme/secure 설정은 프록시 뒤에서 Cookie의 Secure 플래그 동작에 영향을 주므로
+ * application-ajp.yml의 값과 실제 접속 프로토콜(HTTP/HTTPS)을 반드시 일치시켜야 한다.</p>
+ */
 @Slf4j
 @Configuration
 @RequiredArgsConstructor

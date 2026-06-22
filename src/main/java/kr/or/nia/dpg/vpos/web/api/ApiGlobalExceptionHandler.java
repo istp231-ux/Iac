@@ -20,10 +20,21 @@ import javax.net.ssl.SSLException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+/**
+ * API 컨트롤러 전역 예외 핸들러.
+ *
+ * <p>예외 발생 시 {@link VpsExceptionType.ErrorOrigin}에 따라 원인을 분류하고,
+ * 요청/세션 상태를 상세히 기록하여 내부서버/외부서버/네트워크 중 어디에서 문제가 발생했는지
+ * 서버 로그만으로 즉시 판단할 수 있도록 한다.</p>
+ *
+ * <p>네트워크 예외(SocketTimeout, ConnectException, UnknownHost, SSL)는
+ * 별도 핸들러로 분리하여 통신 구간별 원인을 세분화한다.</p>
+ */
 @RestControllerAdvice(basePackages = "kr.or.nia.dpg.vpos.web.api")
 @Slf4j
 public class ApiGlobalExceptionHandler {
 
+    /** VpsException 처리 — ErrorOrigin에 따라 로그 태그와 레벨을 분기 */
     @ExceptionHandler(VpsException.class)
     public ResponseEntity<Map<String, Object>> handleVpsException(VpsException ex, HttpServletRequest request) {
         VpsExceptionType type = ex.getType();
@@ -69,6 +80,7 @@ public class ApiGlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
+    /** 외부 API 응답 시간 초과 — readTimeout 초과 시 발생 */
     @ExceptionHandler(SocketTimeoutException.class)
     public ResponseEntity<Map<String, Object>> handleSocketTimeout(
             SocketTimeoutException ex, HttpServletRequest request) {
@@ -77,6 +89,7 @@ public class ApiGlobalExceptionHandler {
                 "API_TIMEOUT", "외부 API 서버가 응답 시간을 초과했습니다.");
     }
 
+    /** 외부 API 서버 연결 실패 — 서버 다운 또는 포트 미오픈 */
     @ExceptionHandler(ConnectException.class)
     public ResponseEntity<Map<String, Object>> handleConnectException(
             ConnectException ex, HttpServletRequest request) {
@@ -85,6 +98,7 @@ public class ApiGlobalExceptionHandler {
                 "API_CONNECTION_REFUSED", "외부 API 서버에 연결할 수 없습니다.");
     }
 
+    /** DNS 조회 실패 — 외부 API 호스트명 미등록 또는 네트워크 단절 */
     @ExceptionHandler(UnknownHostException.class)
     public ResponseEntity<Map<String, Object>> handleUnknownHost(
             UnknownHostException ex, HttpServletRequest request) {
@@ -93,6 +107,7 @@ public class ApiGlobalExceptionHandler {
                 "API_DNS_ERROR", "외부 API 서버 도메인을 찾을 수 없습니다.");
     }
 
+    /** SSL/TLS 통신 오류 — 인증서 만료/불일치 등 */
     @ExceptionHandler(SSLException.class)
     public ResponseEntity<Map<String, Object>> handleSSLException(
             SSLException ex, HttpServletRequest request) {
@@ -101,6 +116,7 @@ public class ApiGlobalExceptionHandler {
                 "API_SSL_ERROR", "외부 API 서버와 SSL 통신에 실패했습니다.");
     }
 
+    /** @Valid 검증 실패 — 요청 파라미터 유효성 오류 */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleMethodArgumentNotValidException(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
@@ -112,6 +128,7 @@ public class ApiGlobalExceptionHandler {
                 "VALIDATION_ERROR", error.getDefaultMessage());
     }
 
+    /** 예상치 못한 RuntimeException 포괄 처리 — 위 핸들러에 매칭되지 않는 모든 런타임 예외 */
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(
             RuntimeException ex, HttpServletRequest request) {
@@ -130,6 +147,11 @@ public class ApiGlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
+    /**
+     * 요청/세션 상세 진단 문자열 생성.
+     * <p>세션 ID, 쿠키 상태, 프록시 헤더 등을 포함하여
+     * 세션 끊김/인증 실패 원인을 로그만으로 추적할 수 있게 한다.</p>
+     */
     private String describeRequest(HttpServletRequest request) {
         if (request == null) {
             return "request=null";
