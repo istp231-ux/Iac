@@ -1,0 +1,79 @@
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false
+data:
+  api:
+    mobile:
+      micro:
+        payments:
+          block:
+            kt:
+              base-url: "http://api-dev.koreaconnect.kr"
+              request-system: "DPGHUB"
+              request-host: "is-dev.koreaconnect.kr"
+              mot-ver: "1.0"
+              authorization: "QmxvY2tQYXltZW50VGVzdA=="
+              pbsz-user-key: "!@#1SeedKey@Test"
+              api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+              path:
+                mobile-list: /IF-VPS-010
+                block-micro-payments: /IF-VPS-011
+            skt:
+              base-url: "http://api-dev.koreaconnect.kr"
+              pbsz-user-key: "9345C66$^3j1d@1IP4@dP3xI$$01903e"
+              api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+              path:
+                mobile-list-skt: "/test/b543acad-267e-44dd-babe-ff7e5fefebe3"
+                block-micro-payments-skt: "/test/ebb04f48-2d33-4083-8b54-a2f6c9ff8c07"
+            lg:
+              base-url: "http://api-dev.koreaconnect.kr"
+              pbsz-user-key: "CfTat4bZ00X0eMCQ"
+              api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+              path:
+                mobile-list-and-block-lg: "/test/f2c27bcf-3ff1-44b6-a95b-44bd01327a05"
+    kftc:
+      base-url: "http://api-dev.koreaconnect.kr"
+      api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+      account:
+        freeze:
+          base-url: "http://api-dev.koreaconnect.kr"
+          api-org-code: "T991599999"
+          client-id: "daca7e17-c4c2-4e96-8fcc-04848f5b6acf"
+          client-secret: "fde06606-6180-466a-ab96-43f5ca3444c5"
+          access-token-url: "/test/84989f90-7f82-4278-8864-75a3fdc75fc8"
+          freezable-Accounts-url: "/test/4835329e-a49c-439b-be6e-63d23369f0af"
+          freeze-accounts-url: "/test/98bc7df6-6df7-45d5-a3dd-1c540a09ed87"
+
+    fss:
+      base-url: "http://api-dev.koreaconnect.kr"
+      api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+      fss-api-key: ENC(LlTHv3A/y54/H4aLHYlUV9kDaRbRzUcjg9j+JHCMn5szt+ZuOExVJ2SdWlFbzXlr)
+      finance-cd: "0012115"
+      exposure-accident-insert-url: "/test/28d8403b-ec12-492c-b77c-571cc4d4bcc7"
+      exposure-accident-cancel-url: "/test/c3622fe3-96b0-40b5-bd1d-252fceab58c4"
+
+    kait:
+      msafer:
+        base-url: "http://api-dev.koreaconnect.kr"
+        client-id: "partner001"
+        api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+        company-code: "A001"
+        authorization: "175ce3f42e6a1ff20550885477095f7ff10fce260b78d41cb4e84f1c374c99d5"
+        inquiry-subscription-url: "/test/d6d1eb41-a3c4-42c3-8647-ea0d5955ce14"
+        protection-changeStatus-url: "/test/de9bb19f-67d9-41a7-b957-dc297f178176"
+
+    certifi:
+      base-url: "http://api-dev.koreaconnect.kr"
+      api-key: "e4a04b2aab6179e035c62ac3b6425e96da38e0ab5a046d81475578ae59564895"
+
+external:
+  api:
+    vposUrl: "http://localhost:21100"
+
+encryption:
+  aria:
+    keys:
+      kait: "bT8hMCk3Z3FFdHo+UDY5TA=="
+      log: "ELWEqOBkCnafD6GqNLHIfw=="

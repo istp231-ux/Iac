@@ -1,0 +1,9 @@
+data:
+  tomcat:
+    ajp:
+      enabled: true
+      scheme: http
+      protocol: "AJP/1.3"
+      port: 21105
+      secure: false
+      allow-trace: false
